@@ -1,0 +1,623 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bedrock Tweaks</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: #1a1a1a;
+            color: #333;
+        }
+
+        header {
+            background: #222;
+            color: #ffd700;
+            padding: 2rem;
+            text-align: center;
+            border-bottom: 2px solid #ffd700;
+        }
+
+        header h1 {
+            font-size: 2rem;
+            font-weight: 600;
+        }
+
+        header p {
+            color: #999;
+            margin-top: 0.5rem;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .packs-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .pack-card {
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            overflow: hidden;
+        }
+
+        .pack-header {
+            background: #f5f5f5;
+            padding: 1.5rem;
+            text-align: center;
+            cursor: pointer;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .pack-header:hover {
+            background: #ececec;
+        }
+
+        .pack-icon {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .pack-title {
+            font-size: 1rem;
+            font-weight: 600;
+            color: #ffd700;
+        }
+
+        .pack-count {
+            font-size: 0.8rem;
+            color: #999;
+            margin-top: 0.3rem;
+        }
+
+        .pack-styles {
+            display: none;
+            padding: 1rem;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .pack-styles.open {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 0.6rem;
+        }
+
+        .style-btn {
+            padding: 0.7rem;
+            background: #f9f9f9;
+            border: 1px solid #ddd;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            text-align: left;
+            transition: all 0.15s;
+        }
+
+        .style-btn:hover {
+            background: #f0f0f0;
+            border-color: #999;
+        }
+
+        .style-btn.selected {
+            background: #ffd700;
+            color: #000;
+            font-weight: 600;
+            border-color: #ffb300;
+        }
+
+        .pack-selection {
+            padding: 0.8rem;
+            text-align: center;
+            font-size: 0.85rem;
+            color: #999;
+            border-top: 1px solid #ddd;
+        }
+
+        .pack-selection.active {
+            color: #ffd700;
+            font-weight: 600;
+        }
+
+        .selector-panel {
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .selector-panel h2 {
+            font-size: 1.1rem;
+            margin-bottom: 1rem;
+            font-weight: 600;
+        }
+
+        .selected-list {
+            list-style: none;
+            margin-bottom: 1.5rem;
+            padding: 1rem;
+            background: #f9f9f9;
+            border-radius: 3px;
+            min-height: 60px;
+        }
+
+        .selected-list li {
+            padding: 0.5rem 0;
+            color: #333;
+            font-size: 0.9rem;
+            border-left: 3px solid #ffd700;
+            padding-left: 0.8rem;
+        }
+
+        .selected-list.empty {
+            color: #999;
+            font-style: italic;
+        }
+
+        .input-group {
+            margin-bottom: 1rem;
+        }
+
+        .input-group label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            font-size: 0.9rem;
+        }
+
+        .input-group input {
+            width: 100%;
+            padding: 0.8rem;
+            border: 1px solid #ddd;
+            border-radius: 3px;
+            font-size: 0.9rem;
+        }
+
+        .input-group input:focus {
+            outline: none;
+            border-color: #ffd700;
+            box-shadow: 0 0 0 2px rgba(255, 215, 0, 0.1);
+        }
+
+        .btn-download {
+            width: 100%;
+            padding: 0.9rem;
+            background: #ffd700;
+            color: #000;
+            border: none;
+            border-radius: 3px;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 1rem;
+        }
+
+        .btn-download:hover:not(:disabled) {
+            background: #ffb300;
+        }
+
+        .btn-download:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.6);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.show {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 2rem;
+            border-radius: 6px;
+            max-width: 400px;
+            width: 90%;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        }
+
+        .modal-content h2 {
+            margin-bottom: 1rem;
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+
+        .btn-primary, .btn-secondary {
+            flex: 1;
+            padding: 0.8rem;
+            border: none;
+            border-radius: 3px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .btn-primary {
+            background: #ffd700;
+            color: #000;
+        }
+
+        .btn-primary:hover {
+            background: #ffb300;
+        }
+
+        .btn-secondary {
+            background: #f0f0f0;
+            border: 1px solid #ddd;
+            color: #333;
+        }
+
+        .btn-secondary:hover {
+            background: #e0e0e0;
+        }
+
+        footer {
+            text-align: center;
+            padding: 2rem;
+            color: #666;
+            font-size: 0.85rem;
+            border-top: 1px solid #333;
+        }
+
+        footer a {
+            color: #ffd700;
+            text-decoration: none;
+        }
+
+        .loading {
+            opacity: 0.6;
+            pointer-events: none;
+        }
+
+        @media (max-width: 768px) {
+            .packs-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>🎮 BEDROCK TWEAKS</h1>
+        <p>Combine seus estilos favoritos em 1 pack</p>
+    </header>
+
+    <div class="container">
+        <div class="packs-grid" id="packsGrid"></div>
+
+        <div class="selector-panel">
+            <h2>Selecionados</h2>
+            <ul class="selected-list empty" id="selectedList">
+                <li>Nenhum estilo selecionado</li>
+            </ul>
+
+            <div class="input-group">
+                <label>Nome do Pack</label>
+                <input type="text" id="packName" placeholder="Digite um nome para seu pack">
+            </div>
+
+            <button class="btn-download" id="downloadBtn" disabled>⬇️ Download</button>
+        </div>
+    </div>
+
+    <footer>
+        <p>Desenvolvido por <a href="#">Weslleymc01</a> | Packs compilados por <a href="#">SinixtroPlay</a></p>
+        <p>© 2026 Bedrock Tweaks</p>
+    </footer>
+
+    <div class="modal" id="modal">
+        <div class="modal-content">
+            <h2 id="modalTitle">Mensagem</h2>
+            <p id="modalMessage"></p>
+            <div class="modal-buttons">
+                <button class="btn-primary" onclick="closeModal()">OK</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script>
+        const packsData = {
+            elytras: {
+                name: 'Estilos de Elytras',
+                icon: '🦅',
+                file: 'Estilos_de_Elytras.mcpack',
+                items: {
+                    'Menace': 'Menace',
+                    'Home': 'Home',
+                    'Yearn': 'Yearn',
+                    'Desafio': 'Desafio',
+                    '15 Anos': '15 Anos',
+                    '1 Milhão': '1M',
+                    'Tradutor': 'Tradutor',
+                    'Cavalo': 'Cavalo',
+                    'Cobre': 'Cobre',
+                    'Cobalto': 'Cobalto',
+                    'Experience': 'Experience',
+                    'Eyeblossom': 'Eyeblossom',
+                    'Cherry': 'Cherry',
+                    'TikTok': 'Tiktok',
+                    'Twitch': 'Twitch',
+                    'Minecraft': 'Minecraft'
+                }
+            },
+            barras: {
+                name: 'Barras de Inventário',
+                icon: '📦',
+                file: 'Estilos_de_Barras_de_Inventario.mcpack',
+                items: {
+                    'Escura': 'Escura',
+                    'Clara': 'Clara',
+                    'Gradiente': 'Gradiente',
+                    'Transparente': 'Transparente',
+                    'Minecraft': 'Minecraft',
+                    'Neon': 'Neon',
+                    'Clássica': 'Classica',
+                    'Moderna': 'Moderna'
+                }
+            },
+            interface: {
+                name: 'Interface',
+                icon: '🎮',
+                file: 'Estilos_de_Interface.mcpack',
+                items: {
+                    'Ore UI Escura': 'Ore UI Escura',
+                    'Ore UI Clara': 'Ore UI Clara',
+                    'Transparente Escura': 'Transparente Escura',
+                    'Transparente': 'Transparente',
+                    'Willzy': 'Willzy',
+                    'Cinza': 'Cinza',
+                    'Escura': 'Escura',
+                    'Clara': 'Clara'
+                }
+            }
+        };
+
+        let selections = {};
+        let packsCache = {};
+
+        function init() {
+            renderPacks();
+            preloadPacks();
+        }
+
+        function renderPacks() {
+            const grid = document.getElementById('packsGrid');
+            grid.innerHTML = '';
+
+            Object.entries(packsData).forEach(([id, pack]) => {
+                const card = document.createElement('div');
+                card.className = 'pack-card';
+
+                const header = document.createElement('div');
+                header.className = 'pack-header';
+                header.onclick = () => togglePack(id);
+                header.innerHTML = `
+                    <div class="pack-icon">${pack.icon}</div>
+                    <div class="pack-title">${pack.name}</div>
+                    <div class="pack-count">${Object.keys(pack.items).length} estilos</div>
+                `;
+
+                const styles = document.createElement('div');
+                styles.className = 'pack-styles';
+                styles.id = `styles-${id}`;
+
+                Object.entries(pack.items).forEach(([display, folder]) => {
+                    const btn = document.createElement('button');
+                    btn.className = 'style-btn';
+                    btn.textContent = display;
+                    btn.onclick = () => toggleStyle(id, display, folder, btn);
+                    styles.appendChild(btn);
+                });
+
+                const selection = document.createElement('div');
+                selection.className = 'pack-selection';
+                selection.id = `selection-${id}`;
+                selection.textContent = 'Clique em um estilo';
+
+                card.appendChild(header);
+                card.appendChild(styles);
+                card.appendChild(selection);
+                grid.appendChild(card);
+            });
+        }
+
+        function togglePack(id) {
+            const styles = document.getElementById(`styles-${id}`);
+            styles.classList.toggle('open');
+        }
+
+        function toggleStyle(id, display, folder, btn) {
+            btn.classList.toggle('selected');
+
+            if (btn.classList.contains('selected')) {
+                selections[id] = { display, folder };
+            } else {
+                delete selections[id];
+            }
+
+            updateSelector();
+            updateSelection(id, display);
+        }
+
+        function updateSelection(id, display) {
+            const sel = document.getElementById(`selection-${id}`);
+            if (selections[id]) {
+                sel.textContent = display;
+                sel.classList.add('active');
+            } else {
+                sel.textContent = 'Clique em um estilo';
+                sel.classList.remove('active');
+            }
+        }
+
+        function updateSelector() {
+            const list = document.getElementById('selectedList');
+            list.innerHTML = '';
+
+            if (Object.keys(selections).length === 0) {
+                list.classList.add('empty');
+                list.innerHTML = '<li>Nenhum estilo selecionado</li>';
+            } else {
+                list.classList.remove('empty');
+                Object.values(selections).forEach(sel => {
+                    const li = document.createElement('li');
+                    li.textContent = sel.display;
+                    list.appendChild(li);
+                });
+            }
+
+            document.getElementById('downloadBtn').disabled = Object.keys(selections).length === 0;
+        }
+
+        document.getElementById('downloadBtn').addEventListener('click', () => {
+            const name = document.getElementById('packName').value.trim();
+            if (!name) {
+                showModal('Erro', 'Digite um nome para o pack');
+                return;
+            }
+            createPack(name);
+        });
+
+        async function preloadPacks() {
+            for (const [id, pack] of Object.entries(packsData)) {
+                try {
+                    const response = await Promise.race([
+                        fetch(`./${pack.file}`),
+                        new Promise((_, r) => setTimeout(() => r(new Error('Timeout')), 60000))
+                    ]);
+                    if (response.ok) {
+                        packsCache[id] = await response.blob();
+                    }
+                } catch (e) {
+                    console.warn(`Erro ao carregar ${id}`);
+                }
+            }
+        }
+
+        async function createPack(name) {
+            const btn = document.getElementById('downloadBtn');
+            btn.classList.add('loading');
+
+            try {
+                const zip = new JSZip();
+                const subpacks = zip.folder('subpacks');
+                let totalFiles = 0;
+
+                for (const [id, sel] of Object.entries(selections)) {
+                    const pack = packsData[id];
+                    let blob = packsCache[id];
+
+                    if (!blob) {
+                        const res = await fetch(`./${pack.file}`);
+                        blob = await res.blob();
+                    }
+
+                    const packZip = await JSZip.loadAsync(await blob.arrayBuffer());
+                    const srcSubpack = packZip.folder(`subpacks/${sel.folder}`);
+
+                    if (srcSubpack) {
+                        const dstSubpack = subpacks.folder(sel.folder);
+                        srcSubpack.forEach((path, file) => {
+                            if (path && !path.endsWith('/')) {
+                                dstSubpack.file(path, file.async('arraybuffer'));
+                                totalFiles++;
+                            }
+                        });
+                    }
+                }
+
+                const manifest = {
+                    format_version: 2,
+                    header: {
+                        name: name,
+                        description: "Criado no Bedrock Tweaks",
+                        uuid: generateUUID(),
+                        version: [1, 0, 0],
+                        min_engine_version: [1, 21, 0]
+                    },
+                    modules: [{
+                        type: "resources",
+                        uuid: generateUUID(),
+                        version: [1, 0, 0]
+                    }]
+                };
+
+                zip.file('manifest.json', JSON.stringify(manifest, null, 2));
+
+                try {
+                    const iconRes = await fetch('./1000948965.jpg');
+                    if (iconRes.ok) {
+                        zip.file('pack_icon.jpg', await iconRes.arrayBuffer(), {binary: true});
+                    }
+                } catch (e) {}
+
+                const content = await zip.generateAsync({type: 'blob'});
+                const url = URL.createObjectURL(content);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = `${name.replace(/\s+/g, '_')}.mcpack`;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                URL.revokeObjectURL(url);
+
+                showModal('✅ Sucesso', `Pack "${name}" criado com ${totalFiles} arquivos!`);
+            } catch (e) {
+                showModal('❌ Erro', e.message);
+            } finally {
+                btn.classList.remove('loading');
+            }
+        }
+
+        function generateUUID() {
+            return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
+                const r = Math.random() * 16 | 0;
+                return (c === 'x' ? r : r & 0x3 | 0x8).toString(16);
+            });
+        }
+
+        function showModal(title, message) {
+            document.getElementById('modalTitle').textContent = title;
+            document.getElementById('modalMessage').textContent = message;
+            document.getElementById('modal').classList.add('show');
+        }
+
+        function closeModal() {
+            document.getElementById('modal').classList.remove('show');
+        }
+
+        init();
+    </script>
+</body>
+</html>
